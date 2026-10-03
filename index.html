@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratorio de Grafos · Teoría de Redes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EFF3; --card:#FFFFFF; --ink:#14202B; --muted:#52636F; --line:#C9D5DD; --edge:#9FB0BC;
+  --teal:#0B8F7D; --magenta:#D12F6B; --amber:#E39B00; --blue:#2C69D6; --bad:#C62828;
+  --good-bg:#DDF3EE; --bad-bg:#FBE3E3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E171E; --card:#16232D; --ink:#E7EEF3; --muted:#9DB0BE; --line:#2C3E4B; --edge:#4A6070;
+    --teal:#2CC4AE; --magenta:#F0628F; --amber:#F5B83A; --blue:#6B9CFF; --bad:#FF7B7B;
+    --good-bg:#12372F; --bad-bg:#3E1D20;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E171E; --card:#16232D; --ink:#E7EEF3; --muted:#9DB0BE; --line:#2C3E4B; --edge:#4A6070;
+  --teal:#2CC4AE; --magenta:#F0628F; --amber:#F5B83A; --blue:#6B9CFF; --bad:#FF7B7B;
+  --good-bg:#12372F; --bad-bg:#3E1D20;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif}
+h1,h2{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.12;margin:0}
+h1{font-size:clamp(34px,8vw,52px)}
+h2{font-size:clamp(22px,4.8vw,28px)}
+p{margin:0}
+.app{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+.hud{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:14px}
+.hud div{display:flex;flex-direction:column;line-height:1.2}
+.hud span{font-size:13px;color:var(--muted)}
+.hud b{font-family:'Bricolage Grotesque',sans-serif;font-size:24px}
+.metro{display:flex;align-items:center;margin:4px 0 20px}
+.st{flex:none;width:16px;height:16px;border-radius:50%;border:4px solid var(--ink);background:var(--card)}
+.st.ok{background:var(--teal);border-color:var(--teal)}
+.st.now{width:26px;height:26px;border-color:var(--amber)}
+.seg{flex:1;height:6px;background:var(--line)}
+.seg.done{background:var(--ink)}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:20px}
+.task{margin-top:8px;color:var(--muted)}
+.board{margin-top:14px;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:6px}
+.board svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.node,.edge{cursor:pointer;outline:none}
+.node:hover circle.body{stroke:var(--blue)}
+.node:focus-visible circle.body{stroke:var(--blue);stroke-width:8}
+.edge:hover line.vis{stroke:var(--blue)}
+.edge:focus-visible line.vis{stroke:var(--blue)}
+.frozen .node,.frozen .edge{cursor:default;pointer-events:none}
+.status{margin-top:12px;min-height:1.5em;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{font:600 16px 'Figtree',sans-serif;background:var(--ink);color:var(--card);border:2px solid var(--ink);border-radius:10px;padding:12px 20px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:hover{opacity:.88}
+.btn:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.fb{margin-top:16px;padding:14px 16px;border-radius:10px;border-left:6px solid var(--ink);background:var(--bg)}
+.fb.good{border-left-color:var(--teal);background:var(--good-bg)}
+.fb.bad{border-left-color:var(--bad);background:var(--bad-bg)}
+.fb strong{display:block;margin-bottom:2px}
+.rules{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.rules li{display:flex;gap:10px;align-items:flex-start}
+.rules i{flex:none;width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--teal)}
+.rules li:nth-child(2) i{background:var(--magenta)}
+.rules li:nth-child(3) i{background:var(--amber)}
+label{display:block;margin-top:20px;font-weight:600}
+input{display:block;width:100%;margin-top:6px;font:inherit;padding:12px 14px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink)}
+.lead{margin-top:12px;color:var(--muted)}
+.big{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(44px,12vw,72px);line-height:1;margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.stats div{border:2px solid var(--line);border-radius:10px;padding:10px}
+.stats b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:26px}
+.stats span{font-size:13px;color:var(--muted)}
+textarea{width:100%;margin-top:12px;font:inherit;padding:10px;border-radius:10px;border:2px solid var(--ink);background:var(--card);color:var(--ink)}
+.best{margin-top:14px;font-size:15px;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){
+  .st.now{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.18)}}
+  .shake{animation:shake .35s}
+  @keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+}
+</style>
+</head>
+<body>
+<main class="app" id="app"></main>
+
+<script>
+/* ---------- Grafos de la clase ---------- */
+const POS={1:[60,200],2:[190,90],3:[190,310],4:[350,200],5:[510,90],6:[510,310],7:[640,200]};
+const U=[[1,2],[1,4],[1,3],[2,5],[2,4],[3,4],[3,6],[4,7],[4,6],[5,7],[6,7]];
+const D=[[1,2],[1,4],[1,3],[2,5],[4,2],[4,7],[3,4],[3,6],[6,4],[6,7],[5,7]];
+const key=(a,b)=>a<b?a+'-'+b:b+'-'+a;
+const NODES=[1,2,3,4,5,6,7];
+const can=(dir,a,b)=>dir?D.some(e=>e[0]===a&&e[1]===b):U.some(e=>key(e[0],e[1])===key(a,b));
+
+/* ---------- Misiones ---------- */
+const M=[
+ {title:'Tu primera cadena',type:'path',dir:false,start:1,end:7,
+  task:'Construye una cadena que vaya del nodo 1 al nodo 7. Toca los nodos uno por uno, empezando por el 1. Si te equivocas, toca de nuevo el último nodo para quitarlo.',
+  hint:'Desde el 1 puedes ir al 2, al 3 o al 4. Prueba con el nodo del centro.',
+  win:'Una cadena es una serie de arcos que va de un nodo a otro. Su ruta son los nodos que recorre.'},
+ {title:'La más corta',type:'path',dir:false,start:1,end:7,maxArcs:2,
+  task:'Ahora encuentra una cadena de 1 a 7 que use solo 2 arcos.',
+  hint:'Busca un nodo que esté conectado al 1 y también al 7.',
+  win:'Elegir la cadena con menos arcos es la idea detrás de la ruta más corta que calculan apps como Waze.'},
+ {title:'Cierra el circuito',type:'cycle',need:4,
+  task:'Marca los arcos de un ciclo que pase por el nodo 4. Toca cada arco para marcarlo o desmarcarlo, y luego pulsa Verificar.',
+  hint:'Parte del 4, da una vuelta por los nodos de arriba y regresa al 4. En un ciclo cada nodo tiene exactamente 2 arcos marcados.',
+  win:'Un ciclo es una cadena que une a un nodo consigo mismo. Hay varios posibles: el tuyo es uno de ellos.'},
+ {title:'Árbol de expansión',type:'tree',
+  task:'Marca arcos hasta enlazar los 7 nodos sin formar ningún ciclo. Pulsa Verificar cuando creas que lo lograste.',
+  hint:'Un árbol de 7 nodos necesita exactamente 6 arcos. Si un arco cierra un ciclo, quítalo.',
+  win:'Un árbol de expansión enlaza todos los nodos y no permite ciclos. Con N nodos usa N − 1 arcos.'},
+ {title:'Encuentra el nodo fuente',type:'pick',dir:true,pred:'source',
+  task:'Esta gráfica es orientada: cada arco tiene un sentido. Toca el nodo fuente.',
+  hint:'Busca el nodo del que todas las flechas salen y al que no llega ninguna.',
+  win:'El nodo fuente es aquel en el que todos sus ramales están orientados hacia afuera.'},
+ {title:'Encuentra el nodo destino',type:'pick',dir:true,pred:'sink',
+  task:'En la misma gráfica orientada, toca el nodo destino.',
+  hint:'Busca el nodo al que llegan flechas pero del que no sale ninguna.',
+  win:'El nodo destino es aquel en el que todos sus ramales están orientados hacia él.'},
+ {title:'Ruta con sentido',type:'path',dir:true,start:1,end:7,via:6,
+  task:'Construye una ruta del nodo 1 al nodo 7 que pase por el nodo 6, siguiendo el sentido de las flechas.',
+  hint:'Para llegar al 6 sin ir contra una flecha, entra por el nodo 3.',
+  win:'En una gráfica orientada solo puedes recorrer cada arco en su sentido. Así funcionan las calles de un solo sentido.'}
+];
+const MAXPTS=100*M.length;
+
+/* ---------- Estado ---------- */
+const app=document.getElementById('app');
+let S=null,screen='start',typedName='';
+function bestGet(){try{return +localStorage.getItem('lg-best')||0;}catch(e){return 0;}}
+function bestSet(v){try{localStorage.setItem('lg-best',String(v));}catch(e){}}
+
+function newGame(name){S={name,i:0,score:0,done:[],fails:0,hints:0,cur:null};}
+function resetCur(){S.cur={path:[],sel:new Set(),fails:0,hint:false,solved:false};}
+
+function hud(){
+  return `<div class="hud"><div><span>Laboratorio de grafos</span><b>Misión ${S.i+1} de ${M.length}</b></div>
+  <div style="text-align:right"><span>Puntos</span><b>${S.score}</b></div></div>`;
+}
+function metro(){
+  let h='<div class="metro" aria-hidden="true">';
+  for(let i=0;i<M.length;i++){
+    const c=S.done[i]!==undefined?'ok':(i===S.i&&screen==='m'?'now':'');
+    h+=`<div class="st ${c}"></div>`;
+    if(i<M.length-1)h+=`<div class="seg ${S.done[i]!==undefined?'done':''}"></div>`;
+  }
+  return h+'</div>';
+}
+
+/* ---------- Pantallas ---------- */
+function renderStart(){
+  screen='start';
+  const b=bestGet();
+  app.innerHTML=`<section class="card">
+    <h1>Laboratorio de grafos</h1>
+    <p class="lead">Siete misiones para practicar con cadenas, rutas, ciclos, árboles y nodos fuente y destino, directamente sobre la gráfica.</p>
+    <ul class="rules">
+      <li><i></i><span>Cada misión vale hasta 100 puntos.</span></li>
+      <li><i></i><span>Cada intento fallido resta 25 puntos.</span></li>
+      <li><i></i><span>Pedir una pista resta 30 puntos, pero siempre queda un mínimo de 20.</span></li>
+    </ul>
+    <label for="nm">Tu nombre</label>
+    <input id="nm" autocomplete="name" placeholder="Nombre y apellido" value="${typedName.replace(/"/g,'&quot;')}">
+    <div class="row"><button class="btn" data-act="start">Entrar al laboratorio</button></div>
+    ${b?`<p class="best">Tu mejor puntaje en este dispositivo: ${b} de ${MAXPTS}</p>`:''}
+  </section>`;
+}
+
+function renderM(){
+  screen='m'; resetCur();
+  const m=M[S.i];
+  app.innerHTML=`${hud()}${metro()}
+  <section class="card">
+    <h2>${m.title}</h2>
+    <p class="task">${m.task}</p>
+    <div class="board" id="board"></div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="row">
+      ${m.type!=='pick'?'<button class="btn" data-act="check">Verificar</button><button class="btn ghost" data-act="clear">Borrar selección</button>':''}
+      <button class="btn ghost" data-act="hint">Pista (−30)</button>
+    </div>
+    <div id="fb" aria-live="polite"></div>
+  </section>`;
+  drawBoard();
+}
+
+function drawBoard(){
+  const m=M[S.i],c=S.cur,R=26;
+  const edges=m.dir?D:U;
+  const edgeMode=m.type==='cycle'||m.type==='tree';
+  const pk=new Set(); // arcos resaltados en modo ruta
+  for(let k=0;k+1<c.path.length;k++)pk.add(m.dir?c.path[k]+'>'+c.path[k+1]:key(c.path[k],c.path[k+1]));
+  const selCol=m.type==='cycle'?'var(--magenta)':'var(--teal)';
+  let s=`<svg viewBox="0 0 700 400" role="group" aria-label="Gráfica interactiva de siete nodos">`;
+  edges.forEach(([a,b])=>{
+    const k=key(a,b),dk=a+'>'+b;
+    const on=edgeMode?c.sel.has(k):pk.has(m.dir?dk:k);
+    const col=on?(m.type==='path'?'var(--magenta)':selCol):'var(--edge)',w=on?11:6;
+    const [x1,y1]=POS[a],[x2,y2]=POS[b];
+    let inner='';
+    if(!m.dir){
+      inner=`<line class="vis" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+    }else{
+      const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,nx=-uy,ny=ux;
+      const tx=x2-ux*(R+3),ty=y2-uy*(R+3),bx=tx-ux*18,by=ty-uy*18;
+      inner=`<line class="vis" x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>
+             <polygon points="${tx},${ty} ${bx+nx*9},${by+ny*9} ${bx-nx*9},${by-ny*9}" fill="${col}"/>`;
+    }
+    if(edgeMode){
+      s+=`<g class="edge" data-edge="${k}" tabindex="0" role="button" aria-pressed="${on}" aria-label="Arco ${a} a ${b}">
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#000" stroke-opacity="0" stroke-width="34" stroke-linecap="round"/>${inner}</g>`;
+    }else s+=`<g>${inner}</g>`;
+  });
+  NODES.forEach(n=>{
+    const [x,y]=POS[n],inPath=c.path.includes(n);
+    const touched=edgeMode&&[...c.sel].some(k=>k.split('-').map(Number).includes(n));
+    const hot=inPath||touched;
+    const fill=hot?(m.type==='path'?'var(--magenta)':selCol):'var(--card)';
+    const stroke=hot?fill:'var(--ink)';
+    const ring=(m.type==='path'&&(n===m.start||n===m.end))?`<circle cx="${x}" cy="${y}" r="${R+9}" fill="none" stroke="var(--amber)" stroke-width="4"/>`:'';
+    const attrs=edgeMode?'':`class="node" data-node="${n}" tabindex="0" role="button" aria-label="Nodo ${n}"`;
+    s+=`<g ${attrs}>${ring}<circle class="body" cx="${x}" cy="${y}" r="${R}" fill="${fill}" stroke="${stroke}" stroke-width="5"/>
+      <text x="${x}" y="${y+8}" text-anchor="middle" pointer-events="none" font-family="Bricolage Grotesque,Figtree,sans-serif" font-weight="800" font-size="24" fill="${hot?'#fff':'var(--ink)'}">${n}</text></g>`;
+  });
+  s+='</svg>';
+  const b=document.getElementById('board');
+  b.innerHTML=s; b.classList.toggle('frozen',c.solved);
+  // estado textual
+  let st='';
+  if(m.type==='path'){
+    st=c.path.length?`Ruta: [${c.path.join(', ')}]${c.path.length>1?' · Cadena: ['+c.path.slice(1).map((n,k)=>c.path[k]+'-'+n).join(', ')+']':''}`
+      :`Toca el nodo ${m.start} para empezar.`;
+  }else if(edgeMode){
+    st=c.sel.size?`Arcos marcados (${c.sel.size}): ${[...c.sel].join(', ')}`:'Todavía no marcaste ningún arco.';
+  }else st='Toca el nodo que crees correcto.';
+  document.getElementById('status').textContent=st;
+}
+
+/* ---------- Retroalimentación ---------- */
+function say(msg,kind,title){
+  const fb=document.getElementById('fb');
+  fb.innerHTML=`<div class="fb ${kind}">${title?`<strong>${title}</strong>`:''}${msg}</div>`;
+}
+function clearFb(){const fb=document.getElementById('fb');if(fb)fb.innerHTML='';}
+function failMove(msg,title){
+  S.cur.fails++;
+  say(msg,'bad',title||'Todavía no');
+  const b=document.getElementById('board');
+  b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+}
+function win(){
+  const c=S.cur,m=M[S.i];
+  c.solved=true;
+  const pts=Math.max(20,100-25*c.fails-(c.hint?30:0));
+  S.score+=pts; S.done[S.i]=pts; S.fails+=c.fails; if(c.hint)S.hints++;
+  const last=S.i>=M.length-1;
+  document.getElementById('fb').innerHTML=`<div class="fb good"><strong>Misión cumplida, +${pts} puntos</strong>${m.win}</div>
+    <div class="row"><button class="btn" id="next" data-act="next">${last?'Ver resultado':'Siguiente misión'}</button></div>`;
+  document.querySelector('.hud').outerHTML=hud();
+  document.querySelector('.metro').outerHTML=metro();
+  drawBoard();
+  const n=document.getElementById('next'); if(n)n.focus();
+}
+
+/* ---------- Interacción ---------- */
+function clickNode(n){
+  const m=M[S.i],c=S.cur; if(c.solved)return;
+  if(m.type==='path'){
+    const p=c.path,last=p[p.length-1];
+    if(!p.length){
+      if(n!==m.start){say(`La cadena empieza en el nodo ${m.start}.`,'bad','Empieza por el origen');return;}
+      p.push(n);
+    }else if(n===last){p.pop();
+    }else if(p.includes(n)){say('Ya pasaste por ese nodo. Una ruta no repite nodos.','bad','Nodo repetido');return;
+    }else if(can(m.dir,last,n)){p.push(n);
+    }else{
+      const rev=m.dir&&can(true,n,last);
+      say(rev?`El arco entre ${n} y ${last} existe, pero va en sentido contrario: ${n} → ${last}.`:`No hay un arco directo entre ${last} y ${n}.`,'bad','Movimiento no válido');
+      return;
+    }
+    clearFb(); drawBoard();
+  }else if(m.type==='pick'){
+    const out=D.filter(e=>e[0]===n).length,inn=D.filter(e=>e[1]===n).length;
+    const ok=m.pred==='source'?(inn===0&&out>0):(out===0&&inn>0);
+    if(ok)win();
+    else failMove(`El nodo ${n} tiene ${out} arco${out===1?'':'s'} de salida y ${inn} de entrada. ${m.pred==='source'?'El nodo fuente solo tiene arcos de salida.':'El nodo destino solo tiene arcos de entrada.'}`,'Ese no es');
+  }
+}
+function clickEdge(k){
+  const c=S.cur; if(c.solved)return;
+  if(c.sel.has(k))c.sel.delete(k);else c.sel.add(k);
+  clearFb(); drawBoard();
+}
+
+function check(){
+  const m=M[S.i],c=S.cur; if(c.solved)return;
+  if(m.type==='path'){
+    const p=c.path;
+    if(p.length<2)return failMove(`Primero construye la ruta desde el nodo ${m.start}.`);
+    if(p[p.length-1]!==m.end)return failMove(`Tu ruta aún no llega al nodo ${m.end}.`);
+    if(m.maxArcs&&p.length-1>m.maxArcs)return failMove(`Tu cadena usa ${p.length-1} arcos y existe una con solo ${m.maxArcs}.`);
+    if(m.via&&!p.includes(m.via))return failMove(`La ruta debe pasar por el nodo ${m.via}.`);
+    win();
+  }else if(m.type==='cycle'){
+    const sel=[...c.sel].map(k=>k.split('-').map(Number));
+    if(sel.length<3)return failMove('Un ciclo necesita al menos 3 arcos. Sigue marcando.');
+    const deg={};sel.forEach(([a,b])=>{deg[a]=(deg[a]||0)+1;deg[b]=(deg[b]||0)+1;});
+    const bad=Object.keys(deg).find(n=>deg[n]!==2);
+    if(bad)return failMove(`El nodo ${bad} tiene ${deg[bad]} arco${deg[bad]===1?'':'s'} marcado${deg[bad]===1?'':'s'}. En un ciclo cada nodo tiene exactamente 2.`);
+    const ns=Object.keys(deg).map(Number),seen=new Set([ns[0]]),q=[ns[0]];
+    while(q.length){const x=q.pop();sel.forEach(([a,b])=>{if(a===x&&!seen.has(b)){seen.add(b);q.push(b);}if(b===x&&!seen.has(a)){seen.add(a);q.push(a);}});}
+    if(seen.size!==ns.length)return failMove('Marcaste más de un circuito separado. Deja solo uno.');
+    if(!deg[m.need])return failMove(`Tu ciclo debe pasar por el nodo ${m.need}.`);
+    win();
+  }else if(m.type==='tree'){
+    const sel=[...c.sel].map(k=>k.split('-').map(Number));
+    const par={};NODES.forEach(n=>par[n]=n);
+    const f=x=>par[x]===x?x:(par[x]=f(par[x]));
+    for(const [a,b] of sel){
+      if(f(a)===f(b))return failMove(`El arco ${a}-${b} cierra un ciclo. Un árbol no puede tener ciclos: quita alguno de los arcos del circuito.`,'Hay un ciclo');
+      par[f(a)]=f(b);
+    }
+    const miss=NODES.filter(n=>f(n)!==f(1));
+    if(miss.length)return failMove(`Aún no están enlazados todos los nodos. Falta conectar: ${miss.join(', ')}.`,'Faltan nodos');
+    win();
+  }
+}
+
+function hint(){
+  const m=M[S.i],c=S.cur; if(c.solved)return;
+  c.hint=true;
+  say(m.hint,'','Pista (−30 puntos)');
+}
+
+/* ---------- Final ---------- */
+function rankOf(){
+  if(S.score>=600)return 'Arquitecto/a de redes';
+  if(S.score>=450)return 'Planificador/a de rutas';
+  if(S.score>=300)return 'Técnico/a de campo';
+  return 'Aprendiz de grafos';
+}
+function resultText(){
+  return `${S.name||'Estudiante'} — Laboratorio de Grafos: ${S.score} de ${MAXPTS} puntos, ${S.fails} intentos fallidos, ${S.hints} pistas. Rango: ${rankOf()}.`;
+}
+function renderEnd(){
+  screen='end';
+  const prev=bestGet(),record=S.score>prev; if(record)bestSet(S.score);
+  app.innerHTML=`${metro()}
+  <section class="card">
+    <p class="lead" style="margin:0">Completaste las ${M.length} misiones</p>
+    <h1 style="margin-top:6px">${rankOf()}</h1>
+    <div class="big">${S.score}<span style="font-size:.4em;color:var(--muted)"> / ${MAXPTS}</span></div>
+    <p class="lead">${record?'Es tu mejor puntaje en este dispositivo.':'Tu mejor puntaje en este dispositivo: '+prev+'.'}</p>
+    <div class="stats">
+      <div><b>${M.length}/${M.length}</b><span>Misiones</span></div>
+      <div><b>${S.fails}</b><span>Intentos fallidos</span></div>
+      <div><b>${S.hints}</b><span>Pistas usadas</span></div>
+    </div>
+    <div class="row">
+      <button class="btn" data-act="again">Jugar de nuevo</button>
+      <button class="btn ghost" data-act="copy">Copiar mi resultado</button>
+    </div>
+    <div id="copied"></div>
+  </section>`;
+}
+async function copyResult(){
+  const t=resultText(),box=document.getElementById('copied');
+  try{
+    await navigator.clipboard.writeText(t);
+    box.innerHTML='<p class="best">Resultado copiado. Pégalo donde tu docente lo indique.</p>';
+  }catch(e){
+    box.innerHTML=`<p class="best">Copia este texto y envíalo a tu docente:</p><textarea readonly rows="3" id="ta">${t}</textarea>`;
+    const ta=document.getElementById('ta');if(ta){ta.focus();ta.select();}
+  }
+}
+
+/* ---------- Eventos ---------- */
+function activate(t){
+  const nd=t.closest('[data-node]');if(nd&&screen==='m'){clickNode(+nd.dataset.node);return true;}
+  const ed=t.closest('[data-edge]');if(ed&&screen==='m'){clickEdge(ed.dataset.edge);return true;}
+  return false;
+}
+app.addEventListener('click',e=>{
+  if(activate(e.target))return;
+  const a=e.target.closest('[data-act]');if(!a)return;
+  const act=a.dataset.act;
+  if(act==='start'){typedName=document.getElementById('nm').value.trim();newGame(typedName);renderM();}
+  else if(act==='next'){if(S.i>=M.length-1)renderEnd();else{S.i++;renderM();}}
+  else if(act==='check')check();
+  else if(act==='clear'){S.cur.path=[];S.cur.sel=new Set();clearFb();drawBoard();}
+  else if(act==='hint')hint();
+  else if(act==='again'){S=null;renderStart();}
+  else if(act==='copy')copyResult();
+});
+document.addEventListener('keydown',e=>{
+  if(screen==='start'&&e.key==='Enter'&&e.target.id==='nm'){document.querySelector('[data-act="start"]').click();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.closest&&(e.target.closest('[data-node]')||e.target.closest('[data-edge]'))){
+    e.preventDefault();activate(e.target);
+  }
+});
+
+renderStart();
+</script>
+</body>
+</html>
